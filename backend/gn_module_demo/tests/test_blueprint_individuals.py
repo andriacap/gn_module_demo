@@ -1,5 +1,6 @@
 import pytest
 from flask import url_for
+from geoalchemy2.shape import to_shape
 
 from geonature.utils.env import db
 from gn_module_demo.models import Individuals
@@ -27,6 +28,8 @@ def test_list_individuals_endpoints_return_list(admin_client, individuals_batch,
         assert payload.get("per_page") is not None
         assert payload.get("pages") is not None
         assert payload.get("total") is not None
+        if payload["items"]:
+            assert "taxref" in payload["items"][0]
     else:
         assert isinstance(payload, list)
 
@@ -70,6 +73,21 @@ def test_create_update_delete_individual_flow(admin_client, individual_payload):
 
 
 @pytest.mark.integration
+def test_create_individual_with_geom(admin_client, individual_payload):
+    payload = dict(individual_payload)
+    payload["geom"] = {"type": "Point", "coordinates": [6.375, 45.501]}
+
+    response = admin_client.post(url_for("demo.create_individual"), json=payload)
+
+    assert response.status_code == 200
+    created = response.get_json()
+    assert created["geom"]["type"] == "Point"
+
+    created_in_db = db.session.get(Individuals, created["id_individual"])
+    assert to_shape(created_in_db.geom).geom_type == "Point"
+
+
+@pytest.mark.integration
 def test_update_individual_not_found(admin_client):
     response = admin_client.put(
         url_for("demo.update_individual", id_individual=-9999),
@@ -96,6 +114,7 @@ def test_list_individuals_manual_uses_repository(monkeypatch, admin_client):
         id_individual = 99
         name_individual = "Dummy"
         cd_nom = 321
+        geom = None
         taxref = DummyTaxref()
 
     monkeypatch.setattr(

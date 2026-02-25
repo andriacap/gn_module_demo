@@ -12,8 +12,10 @@ import {
   Validators,
 } from '@angular/forms';
 import { GN2CommonModule } from '@geonature_common/GN2Common.module';
+import { leafletDrawOption } from '@geonature_common/map/leaflet-draw.options';
+import { MapService } from '@geonature_common/map/map.service';
 
-import { Individual } from '../../models/individual';
+import { GeoJsonGeometry, Individual } from '../../models/individual';
 import { PaginatedResponse } from '../../models/pagination';
 import { DemoService } from '../../services/demo.service';
 import { TaxrefLite } from '../../models/taxref';
@@ -29,6 +31,29 @@ function positiveIntegerValidator(): ValidatorFn {
 }
 
 const ADDITIONAL_DATA_ALLOWED_SEX = ['M', 'F', 'U'];
+const GEOM_ALLOWED_TYPES = ['Point', 'LineString', 'Polygon'];
+
+function geometryValidator(): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const value = control.value;
+    if (value === null || value === undefined) {
+      return null;
+    }
+    if (typeof value !== 'object') {
+      return { geometry: ['La geometrie doit etre un objet GeoJSON.'] };
+    }
+    const geometry = value as Partial<GeoJsonGeometry>;
+    if (!geometry.type || !GEOM_ALLOWED_TYPES.includes(geometry.type)) {
+      return {
+        geometry: [`Le type de geometrie doit etre parmi: ${GEOM_ALLOWED_TYPES.join(', ')}.`],
+      };
+    }
+    if (geometry.coordinates === undefined || geometry.coordinates === null) {
+      return { geometry: ['Les coordonnees de la geometrie sont requises.'] };
+    }
+    return null;
+  };
+}
 
 function additionalDataSyncValidator(): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
@@ -125,6 +150,25 @@ export class DemoIndividualsComponent implements OnInit {
   editing: Individual | null = null;
   taxrefResults: TaxrefLite[] = [];
   taxrefLoading = false;
+  readonly leafletDrawOptions = {
+    ...leafletDrawOption,
+    draw: {
+      ...leafletDrawOption.draw,
+      marker: true,
+      polyline: true,
+      polygon: {
+        allowIntersection: false,
+        drawError: {
+          color: '#e1e100',
+          message: 'Intersection forbidden !',
+        },
+      },
+    },
+    // edit: {
+    //   ...leafletDrawOption.edit,
+    //   remove: true,
+    // },
+  };
   private _pagination$ = new BehaviorSubject<{ page: number; limit: number }>({
     page: 1,
     limit: 10,
@@ -133,6 +177,7 @@ export class DemoIndividualsComponent implements OnInit {
   form = this._fb.group({
     name_individual: this._fb.control<string>('', [Validators.required, Validators.maxLength(80)]),
     cd_nom: this._fb.control<number | null>(null, [Validators.required, positiveIntegerValidator()]),
+    geom: this._fb.control<GeoJsonGeometry | null>(null, [geometryValidator()]),
     additional_data: this._fb.group(
       {
         age: [null],
@@ -148,7 +193,8 @@ export class DemoIndividualsComponent implements OnInit {
 
   constructor(
     private _demoService: DemoService,
-    private _fb: FormBuilder
+    private _fb: FormBuilder,
+    private _mapService: MapService
   ) {}
 
   ngOnInit() {
@@ -207,6 +253,7 @@ export class DemoIndividualsComponent implements OnInit {
     const payload = {
       name_individual: this.form.value.name_individual ?? '',
       cd_nom: this.form.value.cd_nom ? Number(this.form.value.cd_nom) : null,
+      geom: this.form.value.geom ?? null,
       additional_data: payloadAdditionalData,
     };
     const request$ = this.editing
@@ -236,6 +283,7 @@ export class DemoIndividualsComponent implements OnInit {
     this.form.patchValue({
       name_individual: item.name_individual,
       cd_nom: item.cd_nom,
+      geom: item.geom ?? null,
       additional_data: {
         age: item.additional_data?.age ?? null,
         sex: item.additional_data?.sex ?? '',
@@ -282,13 +330,48 @@ export class DemoIndividualsComponent implements OnInit {
     return item.id_individual;
   }
 
+  onGeometryDrawn(feature: { geometry?: GeoJsonGeometry | null } | null) {
+    const geometry = feature?.geometry ?? null;
+    const geomControl = this.form.get('geom');
+    geomControl?.setValue(geometry);
+    geomControl?.markAsTouched();
+    geomControl?.markAsDirty();
+  }
+
+  clearGeometry(markAsDirty = true) {
+    const geomControl = this.form.get('geom');
+    geomControl?.setValue(null);
+    geomControl?.markAsTouched();
+    if (markAsDirty) {
+      geomControl?.markAsDirty();
+    }
+    this.clearMapGeometry();
+  }
+
   private resetForm() {
-    this.form.reset();
+    this.form.reset({
+      name_individual: '',
+      cd_nom: null,
+      geom: null,
+      additional_data: {
+        age: null,
+        sex: '',
+        notes: '',
+      },
+    });
     this.form.markAsPristine();
     this.taxrefResults = [];
+    this.clearMapGeometry();
   }
 
   private refreshPage() {
     this._pagination$.next(this._pagination$.getValue());
+  }
+
+  private clearMapGeometry() {
+    if (!this._mapService?.map || !this._mapService?.leafletDrawFeatureGroup) {
+      return;
+    }
+    this._mapService.removeAllLayers(this._mapService.map, this._mapService.leafletDrawFeatureGroup);
   }
 }

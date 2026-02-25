@@ -47,6 +47,32 @@
         Selectionnez une espece (cd_nom requis).
       </div>
 
+      <fieldset>
+        <legend>Localisation</legend>
+        <p class="DemoIndividuals__formHint">
+          Dessinez directement sur la carte un point, une ligne ou un polygone.
+        </p>
+        <pnx-map class="DemoIndividuals__map" height="280px" [searchBar]="false">
+          <pnx-leaflet-draw
+            [options]="leafletDrawOptions"
+            [zoomLevel]="1"
+            [geojson]="form.get('geom')?.value"
+            (layerDrawed)="onGeometryDrawn($event)"
+            (layerDeleted)="clearGeometry()"
+          ></pnx-leaflet-draw>
+        </pnx-map>
+        <div class="DemoIndividuals__geometryMeta">
+          <span *ngIf="form.get('geom')?.value as geom">Type dessine: {{ geom.type }}</span>
+          <span *ngIf="!form.get('geom')?.value">Aucune geometrie dessinee.</span>
+          <button type="button" class="DemoIndividuals__ghostButton" (click)="clearGeometry()">
+            Effacer
+          </button>
+        </div>
+        <div class="error" *ngIf="form.get('geom')?.errors?.geometry as errors">
+          <div *ngFor="let message of errors">{{ message }}</div>
+        </div>
+      </fieldset>
+
       <fieldset formGroupName="additional_data">
         <legend>Donnees additionnelles</legend>
         <p class="DemoIndividuals__formHint">
@@ -96,6 +122,7 @@
         <th>Nom</th>
         <th>cd_nom</th>
         <th>Taxref</th>
+        <th>Geom</th>
         <th class="DemoIndividuals__actionsHeader">Actions</th>
       </tr>
     </thead>
@@ -105,6 +132,7 @@
         <td>{{ item.name_individual }}</td>
         <td>{{ item.cd_nom }}</td>
         <td>{{ item.taxref?.nom_complet || '-' }}</td>
+        <td>{{ item.geom?.type || '-' }}</td>
         <td class="DemoIndividuals__actionsCell">
           <button
             type="button"

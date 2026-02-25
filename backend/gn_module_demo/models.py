@@ -1,3 +1,5 @@
+from geoalchemy2 import Geometry
+from sqlalchemy import UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 
 from apptax.taxonomie.models import Taxref
@@ -14,6 +16,41 @@ class Demo(DB.Model):
         primary_key=True,
         autoincrement=True,
     )
+
+
+cor_individual_tag = DB.Table(
+    "cor_individual_tag",
+    DB.Column(
+        "id_individual",
+        DB.Integer,
+        DB.ForeignKey("gn_demo.t_individuals.id_individual", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    DB.Column(
+        "id_tag",
+        DB.Integer,
+        DB.ForeignKey("gn_demo.bib_individual_tags.id_tag", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    schema="gn_demo",
+)
+
+
+class BibIndividualTag(DB.Model):
+    __tablename__ = "bib_individual_tags"
+    __table_args__ = (
+        UniqueConstraint("code_tag", name="uq_gn_demo_bib_individual_tags_code_tag"),
+        {"schema": "gn_demo"},
+    )
+
+    id_tag = DB.Column(
+        "id_tag",
+        DB.Integer,
+        primary_key=True,
+        autoincrement=True,
+    )
+    code_tag = DB.Column("code_tag", DB.String(50), nullable=False)
+    label_tag = DB.Column("label_tag", DB.String(255), nullable=False)
 
 
 class Individuals(DB.Model):
@@ -38,6 +75,12 @@ class Individuals(DB.Model):
         DB.ForeignKey(Taxref.cd_nom),
     )
 
+    geom = DB.Column(
+        "geom",
+        Geometry("GEOMETRY", 4326),
+        nullable=True,
+    )
+
     additional_data = DB.Column(
         "additional_data",
         JSONB,
@@ -49,4 +92,11 @@ class Individuals(DB.Model):
         Taxref,
         foreign_keys=[cd_nom],
         lazy="select",
+    )
+
+    tags = DB.relationship(
+        BibIndividualTag,
+        secondary=cor_individual_tag,
+        lazy="selectin",
+        backref=DB.backref("individuals", lazy="selectin"),
     )

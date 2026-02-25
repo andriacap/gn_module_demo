@@ -64,6 +64,21 @@
   min-height: 80px;
 }
 
+.DemoIndividuals__map {
+  display: block;
+  border: 1px solid #d8d8d8;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.DemoIndividuals__geometryMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+}
+
 .DemoIndividuals__form input {
   padding: 0.45rem 0.6rem;
   border-radius: 6px;

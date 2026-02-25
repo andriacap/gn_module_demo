@@ -18,7 +18,7 @@ from pypnusershub.tests.utils import logged_user
 
 from gn_module_demo import MODULE_CODE, MODULE_LABEL, MODULE_PICTO
 from gn_module_demo.blueprint import blueprint as demo_blueprint
-from gn_module_demo.models import Individuals
+from gn_module_demo.models import BibIndividualTag, Individuals
 
 
 @pytest.fixture
@@ -96,6 +96,24 @@ def individuals_batch(taxref_sample):
         db.session.add_all(individuals)
         db.session.flush()
     return individuals
+
+
+@pytest.fixture
+def individual_tags():
+    tag_defs = [
+        ("TEST_M2M_A", "Tag de test A"),
+        ("TEST_M2M_B", "Tag de test B"),
+    ]
+    tags = []
+    with db.session.begin_nested():
+        for code_tag, label_tag in tag_defs:
+            tag = db.session.scalar(select(BibIndividualTag).where(BibIndividualTag.code_tag == code_tag))
+            if tag is None:
+                tag = BibIndividualTag(code_tag=code_tag, label_tag=label_tag)
+                db.session.add(tag)
+                db.session.flush()
+            tags.append(tag)
+    return tags
 
 
 @pytest.fixture(scope="session", autouse=True)
