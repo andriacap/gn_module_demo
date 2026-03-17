@@ -35,6 +35,96 @@ def test_list_individuals_endpoints_return_list(admin_client, individuals_batch,
 
 
 @pytest.mark.integration
+def test_list_individuals_geojson_returns_feature_collection(admin_client, individuals_batch):
+    response = admin_client.get(url_for("demo.list_individuals_geojson"))
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["type"] == "FeatureCollection"
+    assert isinstance(payload["features"], list)
+    if payload["features"]:
+        feature = payload["features"][0]
+        assert feature["type"] == "Feature"
+        assert "id" in feature
+        assert "properties" in feature
+        assert "id_individual" in feature["properties"]
+
+
+@pytest.mark.integration
+def test_individual_filters_are_consistent_between_list_and_map(admin_client, individual_payload, users):
+    observer_a_id = users["admin_user"].id_role
+    observer_b_id = users["self_user"].id_role
+
+    payload_a = dict(individual_payload)
+    payload_a["name_individual"] = "Filter API A"
+    payload_a["observer"] = observer_a_id
+    payload_a["additional_data"] = {
+        "age": 2,
+        "sex": "F",
+        "observation_date": "2026-02-10",
+    }
+
+    payload_b = dict(individual_payload)
+    payload_b["name_individual"] = "Filter API B"
+    payload_b["observer"] = observer_b_id
+    payload_b["additional_data"] = {
+        "age": 4,
+        "sex": "M",
+        "observation_date": "2025-01-05",
+    }
+
+    create_response_a = admin_client.post(url_for("demo.create_individual"), json=payload_a)
+    create_response_b = admin_client.post(url_for("demo.create_individual"), json=payload_b)
+    assert create_response_a.status_code == 200
+    assert create_response_b.status_code == 200
+    created_a = create_response_a.get_json()
+    created_b = create_response_b.get_json()
+
+    filters = {
+        "observer": str(observer_a_id),
+        "date_from": "2026-01-01",
+        "date_to": "2026-12-31",
+        "limit": 500,
+    }
+    list_response = admin_client.get(url_for("demo.list_individuals"), query_string=filters)
+    map_response = admin_client.get(url_for("demo.list_individuals_geojson"), query_string=filters)
+
+    assert list_response.status_code == 200
+    assert map_response.status_code == 200
+
+    list_payload = list_response.get_json()
+    map_payload = map_response.get_json()
+
+    list_ids = {item["id_individual"] for item in list_payload["items"]}
+    map_ids = {feature["properties"]["id_individual"] for feature in map_payload["features"]}
+
+    matching_list_item = next(
+        (item for item in list_payload["items"] if item["id_individual"] == created_a["id_individual"]),
+        None,
+    )
+    expected_observer_name = " ".join(
+        part for part in [users["admin_user"].nom_role, users["admin_user"].prenom_role] if part
+    ).strip() or (users["admin_user"].nom_complet or "").strip()
+
+    assert created_a["id_individual"] in list_ids
+    assert created_a["id_individual"] in map_ids
+    assert created_b["id_individual"] not in list_ids
+    assert created_b["id_individual"] not in map_ids
+    assert matching_list_item is not None
+    assert matching_list_item["observer_full_name"] == expected_observer_name
+
+
+@pytest.mark.integration
+def test_list_individuals_rejects_invalid_date_filter(admin_client):
+    response = admin_client.get(
+        url_for("demo.list_individuals"),
+        query_string={"date_from": "2026-99-01"},
+    )
+
+    assert response.status_code == 400
+
+
+@pytest.mark.integration
 def test_create_individual_requires_json(admin_client):
     response = admin_client.post(url_for("demo.create_individual"))
 

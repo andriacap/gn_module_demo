@@ -1,175 +1,444 @@
-<section class="DemoIndividuals" *ngIf="individuals$ | async as individuals">
-  <h3>Individus</h3>
-  <div class="DemoIndividuals__formCard">
-    <div class="DemoIndividuals__formHeader">
-      <div>
-        <h4>{{ editing ? "Modifier l'individu" : 'Ajouter un individu' }}</h4>
-        <p class="DemoIndividuals__formHint">
-          {{ editing ? 'Mettez a jour les informations puis enregistrez.' : 'Ajoutez un nouvel individu a la liste.' }}
-        </p>
-      </div>
+<section class="DemoIndividuals">
+  <header class="DemoIndividuals__pageHeader">
+    <div>
+      <h3>Individus</h3>
+      <p
+        class="DemoIndividuals__formHint"
+        *ngIf="isListMode"
+      >
+        Carte et liste synchronisees (selection croisee carte/liste).
+      </p>
+      <p
+        class="DemoIndividuals__formHint"
+        *ngIf="isFormMode"
+      >
+        {{ isEditMode ? "Modification d'un individu" : "Creation d'un individu" }}
+      </p>
+    </div>
+
+    <div class="DemoIndividuals__pageActions">
       <button
+        *ngIf="isListMode"
         type="button"
         class="DemoIndividuals__ghostButton"
-        *ngIf="editing"
+        (click)="goToCreatePage()"
+      >
+        Ajouter un individu
+      </button>
+      <button
+        *ngIf="isFormMode"
+        type="button"
+        class="DemoIndividuals__ghostButton"
         (click)="cancelEdit()"
       >
-        Annuler
+        Retour a la liste
       </button>
     </div>
-    <form class="DemoIndividuals__form" [formGroup]="form" (ngSubmit)="submit()">
-      <label>
-        Nom
-        <input type="text" formControlName="name_individual" placeholder="Nom de l'individu" />
-      </label>
+  </header>
+
+  <ng-container *ngIf="isListMode; else individualsFormPage">
+    <section
+      class="DemoIndividuals__listPage"
+      *ngIf="individuals$ | async as individuals"
+    >
+      <div class="DemoIndividuals__listMain">
+        <div class="DemoIndividuals__mapCard">
+          <div class="DemoIndividuals__mapHeader">
+            <h4>Carte des individus</h4>
+            <p class="DemoIndividuals__formHint">
+              Clic sur la carte: surbrillance dans la liste. Clic sur la liste: surbrillance et
+              centrage sur la carte.
+            </p>
+          </div>
+          <div
+            class="DemoIndividuals__mapStatus"
+            *ngIf="mapLoading"
+          >
+            Chargement des geometries...
+          </div>
+          <p
+            class="error"
+            *ngIf="mapErrorMessage"
+          >
+            {{ mapErrorMessage }}
+          </p>
+          <pnx-demo-individuals-map
+            class="DemoIndividuals__selectionMap"
+            [featureCollection]="mapFeatureCollection"
+            [selectedIndividualId]="selectedIndividualId"
+            (individualSelected)="onMapIndividualSelected($event)"
+          ></pnx-demo-individuals-map>
+        </div>
+
+        <div class="DemoIndividuals__listPanel">
+          <div class="DemoIndividuals__filterCard">
+            <h4>Filtres</h4>
+            <form
+              class="DemoIndividuals__filters"
+              [formGroup]="filterForm"
+              (ngSubmit)="applyFilters()"
+            >
+              <label>
+                Nom individu
+                <input
+                  type="text"
+                  formControlName="name"
+                  placeholder="Ex: Individu A"
+                />
+              </label>
+              <label>
+                Nom taxonomique (scientifique/vernaculaire)
+                <input
+                  type="text"
+                  formControlName="taxref"
+                  placeholder="Ex: marmotte"
+                />
+              </label>
+              <div class="DemoIndividuals__observerFilter">
+                <pnx-observers
+                  [parentFormControl]="filterForm.get('observer')"
+                  [codeList]="observerFilterListCode"
+                  [bindValue]="'id_role'"
+                  [multiSelect]="false"
+                  [clearable]="true"
+                  [label]="'Observateur'"
+                ></pnx-observers>
+              </div>
+              <label>
+                Date debut
+                <input
+                  type="date"
+                  formControlName="date_from"
+                />
+              </label>
+              <label>
+                Date fin
+                <input
+                  type="date"
+                  formControlName="date_to"
+                />
+              </label>
+              <div class="DemoIndividuals__filterActions">
+                <button type="submit">Filtrer</button>
+                <button
+                  type="button"
+                  class="DemoIndividuals__ghostButton"
+                  (click)="resetFilters()"
+                >
+                  Reinitialiser
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div class="DemoIndividuals__meta">
+            <span>Page {{ individuals.page }} / {{ individuals.pages }}</span>
+            <span>Total {{ individuals.total }}</span>
+          </div>
+
+          <div *ngIf="individuals.items.length === 0">Aucun individu disponible.</div>
+
+          <ngx-datatable
+            *ngIf="individuals.items.length > 0"
+            class="material striped DemoIndividuals__datatable"
+            [columnMode]="'force'"
+            [draggable]="false"
+            [externalPaging]="true"
+            [footerHeight]="40"
+            [headerHeight]="40"
+            [limit]="individuals.per_page"
+            [offset]="individuals.page - 1"
+            [rowHeight]="44"
+            [rows]="individuals.items"
+            [count]="individuals.total"
+            [selectionType]="'single'"
+            [selected]="getSelectedRows(individuals.items)"
+            [rowClass]="getDatatableRowClass"
+            (select)="onTableSelect($event)"
+            (page)="onListPage($event)"
+          >
+            <ngx-datatable-column
+              name="ID"
+              prop="id_individual"
+              [width]="80"
+            ></ngx-datatable-column>
+            <ngx-datatable-column
+              name="Nom"
+              prop="name_individual"
+            ></ngx-datatable-column>
+            <ngx-datatable-column name="Observateur">
+              <ng-template
+                ngx-datatable-cell-template
+                let-row="row"
+              >
+                {{ formatObserverDisplay(row) }}
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column
+              name="cd_nom"
+              prop="cd_nom"
+              [width]="100"
+            ></ngx-datatable-column>
+
+            <ngx-datatable-column name="Taxref">
+              <ng-template
+                ngx-datatable-cell-template
+                let-row="row"
+              >
+                {{ row.taxref?.nom_complet || '-' }}
+              </ng-template>
+            </ngx-datatable-column>
+
+            <ngx-datatable-column
+              name="Geom"
+              [width]="100"
+            >
+              <ng-template
+                ngx-datatable-cell-template
+                let-row="row"
+              >
+                {{ row.geom?.type || '-' }}
+              </ng-template>
+            </ngx-datatable-column>
+
+            <ngx-datatable-column
+              name="Actions"
+              [sortable]="false"
+              [canAutoResize]="false"
+              [width]="120"
+            >
+              <ng-template
+                ngx-datatable-cell-template
+                let-row="row"
+              >
+                <div class="DemoIndividuals__actionsCell">
+                  <button
+                    type="button"
+                    class="DemoIndividuals__iconButton"
+                    aria-label="Editer l'individu"
+                    title="Editer"
+                    (click)="goToEditPage(row); $event.stopPropagation()"
+                  >
+                    <svg
+                      class="DemoIndividuals__icon"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M3 17.25V21h3.75l11.02-11.03-3.75-3.75L3 17.25zm14.71-9.04a1 1 0 0 0 0-1.41l-2.5-2.5a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.99-1.67z"
+                      ></path>
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    class="DemoIndividuals__iconButton DemoIndividuals__iconButton--danger"
+                    aria-label="Supprimer l'individu"
+                    title="Supprimer"
+                    (click)="deleteIndividual(row); $event.stopPropagation()"
+                  >
+                    <svg
+                      class="DemoIndividuals__icon"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path d="M6 7h12l-1 13H7L6 7z"></path>
+                      <path d="M9 4h6l1 2H8l1-2z"></path>
+                      <path d="M4 6h16v2H4V6z"></path>
+                    </svg>
+                  </button>
+                </div>
+              </ng-template>
+            </ngx-datatable-column>
+          </ngx-datatable>
+        </div>
+      </div>
+    </section>
+  </ng-container>
+
+  <ng-template #individualsFormPage>
+    <div class="DemoIndividuals__formCard">
+      <div class="DemoIndividuals__formHeader">
+        <div>
+          <h4>{{ isEditMode ? "Modifier l'individu" : 'Ajouter un individu' }}</h4>
+          <p class="DemoIndividuals__formHint">
+            {{
+              isEditMode
+                ? 'Mettez a jour les informations puis enregistrez.'
+                : 'Ajoutez un nouvel individu.'
+            }}
+          </p>
+        </div>
+      </div>
+
       <div
-        class="error"
-        *ngIf="form.get('name_individual')?.touched && form.get('name_individual')?.invalid"
+        class="DemoIndividuals__mapStatus"
+        *ngIf="formLoading"
       >
-        Le nom est requis (max 80 caracteres).
+        Chargement de l'individu...
       </div>
+      <p
+        class="error"
+        *ngIf="formLoadErrorMessage"
+      >
+        {{ formLoadErrorMessage }}
+      </p>
 
-      <label>
-        Espece (Taxref)
-        <ng-select
-          [items]="taxrefResults"
-          bindLabel="nom_complet"
-          bindValue="cd_nom"
-          [loading]="taxrefLoading"
-          [searchable]="true"
-          [clearable]="true"
-          formControlName="cd_nom"
-          (search)="searchTaxref($event.term)"
-          placeholder="Rechercher une espece"
-        ></ng-select>
-      </label>
-      <div class="error" *ngIf="form.get('cd_nom')?.touched && form.get('cd_nom')?.invalid">
-        Selectionnez une espece (cd_nom requis).
-      </div>
+      <form
+        class="DemoIndividuals__form"
+        [formGroup]="form"
+        (ngSubmit)="submit()"
+      >
+        <label>
+          Nom
+          <input
+            type="text"
+            formControlName="name_individual"
+            placeholder="Nom de l'individu"
+          />
+        </label>
+        <div
+          class="error"
+          *ngIf="form.get('name_individual')?.touched && form.get('name_individual')?.invalid"
+        >
+          Le nom est requis (max 80 caracteres).
+        </div>
 
-      <fieldset>
-        <legend>Localisation</legend>
-        <p class="DemoIndividuals__formHint">
-          Dessinez directement sur la carte un point, une ligne ou un polygone.
-        </p>
-        <pnx-map class="DemoIndividuals__map" height="280px" [searchBar]="false">
-          <pnx-leaflet-draw
-            [options]="leafletDrawOptions"
-            [zoomLevel]="1"
-            [geojson]="form.get('geom')?.value"
-            (layerDrawed)="onGeometryDrawn($event)"
-            (layerDeleted)="clearGeometry()"
-          ></pnx-leaflet-draw>
-        </pnx-map>
-        <div class="DemoIndividuals__geometryMeta">
-          <span *ngIf="form.get('geom')?.value as geom">Type dessine: {{ geom.type }}</span>
-          <span *ngIf="!form.get('geom')?.value">Aucune geometrie dessinee.</span>
-          <button type="button" class="DemoIndividuals__ghostButton" (click)="clearGeometry()">
-            Effacer
+        <label>
+          ID observateur
+          <input
+            type="number"
+            formControlName="observer"
+            placeholder="Ex: 12 (utilisateurs.t_roles.id_role)"
+          />
+        </label>
+
+        <label>
+          Espece (Taxref)
+          <ng-select
+            [items]="taxrefResults"
+            bindLabel="nom_complet"
+            bindValue="cd_nom"
+            [loading]="taxrefLoading"
+            [searchable]="true"
+            [clearable]="true"
+            formControlName="cd_nom"
+            (search)="searchTaxref($event.term)"
+            placeholder="Rechercher une espece"
+          ></ng-select>
+        </label>
+        <div
+          class="error"
+          *ngIf="form.get('cd_nom')?.touched && form.get('cd_nom')?.invalid"
+        >
+          Selectionnez une espece (cd_nom requis).
+        </div>
+
+        <fieldset>
+          <legend>Localisation</legend>
+          <p class="DemoIndividuals__formHint">
+            Dessinez directement sur la carte un point, une ligne ou un polygone.
+          </p>
+          <pnx-map
+            class="DemoIndividuals__map"
+            height="280px"
+            [searchBar]="false"
+          >
+            <pnx-leaflet-draw
+              [options]="leafletDrawOptions"
+              [zoomLevel]="1"
+              [geojson]="form.get('geom')?.value"
+              (layerDrawed)="onGeometryDrawn($event)"
+              (layerDeleted)="clearGeometry()"
+            ></pnx-leaflet-draw>
+          </pnx-map>
+          <div class="DemoIndividuals__geometryMeta">
+            <span *ngIf="form.get('geom')?.value as geom">Type dessine: {{ geom.type }}</span>
+            <span *ngIf="!form.get('geom')?.value">Aucune geometrie dessinee.</span>
+            <button
+              type="button"
+              class="DemoIndividuals__ghostButton"
+              (click)="clearGeometry()"
+            >
+              Effacer
+            </button>
+          </div>
+          <div
+            class="error"
+            *ngIf="form.get('geom')?.errors?.geometry as errors"
+          >
+            <div *ngFor="let message of errors">{{ message }}</div>
+          </div>
+        </fieldset>
+
+        <fieldset formGroupName="additional_data">
+          <legend>Donnees additionnelles</legend>
+          <p class="DemoIndividuals__formHint">
+            Age doit etre un entier >= 0. Sex doit etre parmi M, F, U. La validation asynchrone
+            appelle le backend.
+          </p>
+          <label>
+            Age
+            <input
+              type="number"
+              formControlName="age"
+              placeholder="Ex: 3"
+            />
+          </label>
+          <label>
+            Sex
+            <input
+              type="text"
+              formControlName="sex"
+              placeholder="Ex: F"
+            />
+          </label>
+          <label>
+            Notes
+            <textarea formControlName="notes"></textarea>
+          </label>
+          <div
+            class="error"
+            *ngIf="form.get('additional_data')?.errors?.additionalData as errors"
+          >
+            <div *ngFor="let message of errors">{{ message }}</div>
+          </div>
+          <div
+            class="DemoIndividuals__pending"
+            *ngIf="form.get('additional_data')?.pending"
+          >
+            Validation asynchrone en cours...
+          </div>
+        </fieldset>
+
+        <div class="DemoIndividuals__formActions">
+          <button
+            type="submit"
+            [disabled]="saving || formLoading"
+          >
+            {{ isEditMode ? 'Enregistrer' : 'Ajouter' }}
           </button>
-        </div>
-        <div class="error" *ngIf="form.get('geom')?.errors?.geometry as errors">
-          <div *ngFor="let message of errors">{{ message }}</div>
-        </div>
-      </fieldset>
-
-      <fieldset formGroupName="additional_data">
-        <legend>Donnees additionnelles</legend>
-        <p class="DemoIndividuals__formHint">
-          Age doit etre un entier >= 0. Sex doit etre parmi M, F, U. La validation asynchrone appelle le backend.
-        </p>
-        <label>
-          Age
-          <input type="number" formControlName="age" placeholder="Ex: 3" />
-        </label>
-        <label>
-          Sex
-          <input type="text" formControlName="sex" placeholder="Ex: F" />
-        </label>
-        <label>
-          Notes
-          <textarea formControlName="notes"></textarea>
-        </label>
-        <div class="error" *ngIf="form.get('additional_data')?.errors?.additionalData as errors">
-          <div *ngFor="let message of errors">{{ message }}</div>
-        </div>
-        <div class="DemoIndividuals__pending" *ngIf="form.get('additional_data')?.pending">
-          Validation asynchrone en cours...
-        </div>
-      </fieldset>
-
-      <div class="DemoIndividuals__formActions">
-        <button type="submit" [disabled]="saving">
-          {{ editing ? 'Enregistrer' : 'Ajouter' }}
-        </button>
-        <button type="button" class="DemoIndividuals__ghostButton" *ngIf="editing" (click)="cancelEdit()">
-          Annuler
-        </button>
-      </div>
-    </form>
-    <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
-    <p class="success" *ngIf="successMessage">{{ successMessage }}</p>
-  </div>
-  <div class="DemoIndividuals__meta">
-    <span>Page {{ individuals.page }} / {{ individuals.pages }}</span>
-    <span>Total {{ individuals.total }}</span>
-  </div>
-  <div *ngIf="individuals.items.length === 0">Aucun individu disponible.</div>
-  <table *ngIf="individuals.items.length > 0">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Nom</th>
-        <th>cd_nom</th>
-        <th>Taxref</th>
-        <th>Geom</th>
-        <th class="DemoIndividuals__actionsHeader">Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let item of individuals.items; trackBy: trackByIndividualId">
-        <td>{{ item.id_individual }}</td>
-        <td>{{ item.name_individual }}</td>
-        <td>{{ item.cd_nom }}</td>
-        <td>{{ item.taxref?.nom_complet || '-' }}</td>
-        <td>{{ item.geom?.type || '-' }}</td>
-        <td class="DemoIndividuals__actionsCell">
           <button
             type="button"
-            class="DemoIndividuals__iconButton"
-            aria-label="Editer l'individu"
-            title="Editer"
-            (click)="startEdit(item)"
+            class="DemoIndividuals__ghostButton"
+            (click)="cancelEdit()"
           >
-            <svg class="DemoIndividuals__icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path
-                d="M3 17.25V21h3.75l11.02-11.03-3.75-3.75L3 17.25zm14.71-9.04a1 1 0 0 0 0-1.41l-2.5-2.5a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.99-1.67z"
-              ></path>
-            </svg>
+            Retour
           </button>
-          <button
-            type="button"
-            class="DemoIndividuals__iconButton DemoIndividuals__iconButton--danger"
-            aria-label="Supprimer l'individu"
-            title="Supprimer"
-            (click)="deleteIndividual(item)"
-          >
-            <svg class="DemoIndividuals__icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M6 7h12l-1 13H7L6 7z"></path>
-              <path d="M9 4h6l1 2H8l1-2z"></path>
-              <path d="M4 6h16v2H4V6z"></path>
-            </svg>
-          </button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-  <div class="DemoIndividuals__pager">
-    <button type="button" (click)="prevPage(individuals)" [disabled]="!individuals.prev_num">
-      Page précédente
-    </button>
-    <button type="button" (click)="nextPage(individuals)" [disabled]="!individuals.next_num">
-      Page suivante
-    </button>
-  </div>
+        </div>
+      </form>
+
+      <p
+        class="error"
+        *ngIf="errorMessage"
+      >
+        {{ errorMessage }}
+      </p>
+      <p
+        class="success"
+        *ngIf="successMessage"
+      >
+        {{ successMessage }}
+      </p>
+    </div>
+  </ng-template>
 </section>

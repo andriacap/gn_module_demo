@@ -5,6 +5,7 @@ Définition des routes du module export
 import csv
 import os
 from contextlib import contextmanager
+from datetime import date
 from io import StringIO
 from urllib.parse import urlparse
 
@@ -42,6 +43,7 @@ from .repositories import (
     list_individuals_csv_rows as repo_list_individuals_csv_rows,
     list_individual_tags as repo_list_individual_tags,
     paginate_individuals_with_taxref as repo_paginate_individuals_with_taxref,
+    list_individuals_for_map as repo_list_individuals_for_map,
     list_individuals_projection as repo_list_individuals_projection,
     list_individuals_with_taxref as repo_list_individuals_with_taxref,
     repo_raise_for_demo as repo_raise_for_demo,
@@ -64,16 +66,19 @@ blueprint.template_folder = os.path.join(blueprint.root_path, "templates")
 
 @contextmanager
 def _sql_debug(label):
-    engine = db.session.get_bind()
+    # Scope SQL debug listener to the current connection to avoid mutating
+    # the global engine listeners while concurrent requests are running.
+    connection = db.session.connection()
 
     def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
         print(f"[sql:{label}] {statement} | params={parameters}")
 
-    event.listen(engine, "before_cursor_execute", before_cursor_execute)
+    event.listen(connection, "before_cursor_execute", before_cursor_execute)
     try:
         yield
     finally:
-        event.remove(engine, "before_cursor_execute", before_cursor_execute)
+        if event.contains(connection, "before_cursor_execute", before_cursor_execute):
+            event.remove(connection, "before_cursor_execute", before_cursor_execute)
 
 
 def _serialize_individuals_manual(individuals):
@@ -124,6 +129,35 @@ def _load_individual_form_m2m_payload():
         return individual_form_m2m_schema.load(payload)
     except ValidationError as exc:
         raise BadRequest(exc.messages) from exc
+
+
+def _load_individual_filters():
+    name = (request.args.get("name", type=str) or "").strip()
+    taxref_query = (request.args.get("taxref", type=str) or "").strip()
+    observer = (request.args.get("observer", type=str) or "").strip()
+    date_from = (request.args.get("date_from", type=str) or "").strip()
+    date_to = (request.args.get("date_to", type=str) or "").strip()
+
+    try:
+        date_from_value = date.fromisoformat(date_from) if date_from else None
+    except ValueError as exc:
+        raise BadRequest("date_from must use ISO format YYYY-MM-DD") from exc
+
+    try:
+        date_to_value = date.fromisoformat(date_to) if date_to else None
+    except ValueError as exc:
+        raise BadRequest("date_to must use ISO format YYYY-MM-DD") from exc
+
+    if date_from_value and date_to_value and date_from_value > date_to_value:
+        raise BadRequest("date_from must be less than or equal to date_to")
+
+    return {
+        "name": name or None,
+        "taxref_query": taxref_query or None,
+        "observer": observer or None,
+        "date_from": date_from_value.isoformat() if date_from_value else None,
+        "date_to": date_to_value.isoformat() if date_to_value else None,
+    }
 
 
 def _build_backref_demo():
@@ -386,11 +420,13 @@ def list_individuals():
     schema = IndividualsSchema(as_geojson=True, only=["taxref"])
     limit = request.args.get("limit", type=int, default=50)
     page = request.args.get("page", type=int, default=1)
+    filters = _load_individual_filters()
     with _sql_debug("individuals"):
         pagination = repo_paginate_individuals_with_taxref(
             page=page,
             per_page=limit,
             load_strategy="selectin",
+            filters=filters,
         )
     items = [_feature_to_individual_payload(schema.dump(item)) for item in pagination["items"]]
     return {
@@ -401,6 +437,28 @@ def list_individuals():
         "total": pagination["total"],
         "prev_num": pagination["prev_num"],
         "next_num": pagination["next_num"],
+    }
+
+
+@blueprint.route("/individuals/geojson", methods=["GET"])
+@login_required
+@json_resp
+def list_individuals_geojson():
+    schema = IndividualsSchema(as_geojson=True, only=["taxref"])
+    filters = _load_individual_filters()
+    with _sql_debug("individuals-geojson"):
+        individuals = repo_list_individuals_for_map(load_strategy="selectin", filters=filters)
+
+    features = []
+    for individual in individuals:
+        payload = _feature_to_individual_payload(schema.dump(individual))
+        feature = _individual_payload_to_feature(payload)
+        feature["id"] = payload.get("id_individual")
+        features.append(feature)
+
+    return {
+        "type": "FeatureCollection",
+        "features": features,
     }
 
 

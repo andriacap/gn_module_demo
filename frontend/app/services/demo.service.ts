@@ -7,7 +7,12 @@ import { ModuleService } from '@geonature/services/module.service';
 import { DEMO_ENDPOINTS } from '../constants/demo-endpoints';
 import { Demo } from '../models/demo';
 import { DemoStats } from '../models/demo-stats';
-import { Individual, IndividualPayload } from '../models/individual';
+import {
+  Individual,
+  IndividualFilters,
+  IndividualMapFeatureCollection,
+  IndividualPayload,
+} from '../models/individual';
 import { PaginatedResponse } from '../models/pagination';
 import { TaxrefLite } from '../models/taxref';
 
@@ -38,11 +43,24 @@ export class DemoService {
     return this._http.get<Demo>(this.buildUrl(String(id_demo)));
   }
 
-  getIndividuals(page = 1, limit = 10): Observable<PaginatedResponse<Individual>> {
-    const params = new HttpParams().set('page', String(page)).set('limit', String(limit));
+  getIndividuals(
+    page = 1,
+    limit = 10,
+    filters: IndividualFilters = {}
+  ): Observable<PaginatedResponse<Individual>> {
+    let params = new HttpParams().set('page', String(page)).set('limit', String(limit));
+    params = this.appendIndividualFilters(params, filters);
     return this._http.get<PaginatedResponse<Individual>>(this.buildUrl(DEMO_ENDPOINTS.individuals), {
       params,
     });
+  }
+
+  getIndividualsGeojson(filters: IndividualFilters = {}): Observable<IndividualMapFeatureCollection> {
+    const params = this.appendIndividualFilters(new HttpParams(), filters);
+    return this._http.get<IndividualMapFeatureCollection>(
+      this.buildUrl(DEMO_ENDPOINTS.individualsGeojson),
+      { params }
+    );
   }
 
   createIndividual(payload: IndividualPayload): Observable<Individual> {
@@ -90,5 +108,35 @@ export class DemoService {
       this.buildUrl(DEMO_ENDPOINTS.mockStrategies),
       { params }
     );
+  }
+
+  private appendIndividualFilters(params: HttpParams, filters: IndividualFilters): HttpParams {
+    const normalized: Record<string, string> = {};
+    const name = (filters.name ?? '').trim();
+    const taxref = (filters.taxref ?? '').trim();
+    const observer = (filters.observer ?? '').trim();
+    const dateFrom = (filters.date_from ?? '').trim();
+    const dateTo = (filters.date_to ?? '').trim();
+
+    if (name) {
+      normalized.name = name;
+    }
+    if (taxref) {
+      normalized.taxref = taxref;
+    }
+    if (observer) {
+      normalized.observer = observer;
+    }
+    if (dateFrom) {
+      normalized.date_from = dateFrom;
+    }
+    if (dateTo) {
+      normalized.date_to = dateTo;
+    }
+
+    Object.entries(normalized).forEach(([key, value]) => {
+      params = params.set(key, value);
+    });
+    return params;
   }
 }

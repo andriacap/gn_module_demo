@@ -3,8 +3,34 @@
   gap: 0.75rem;
 }
 
+.DemoIndividuals__pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.DemoIndividuals__pageActions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
 .DemoIndividuals h3 {
   margin: 0;
+}
+
+.DemoIndividuals__listMain {
+  display: grid;
+  grid-template-columns: minmax(340px, 42%) minmax(420px, 58%);
+  gap: 0.75rem;
+  align-items: start;
+}
+
+.DemoIndividuals__listPanel {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
 }
 
 .DemoIndividuals__formCard {
@@ -131,25 +157,103 @@
   color: #4a4a4a;
 }
 
-.DemoIndividuals__pager {
+.DemoIndividuals__filterCard {
+  border: 1px solid #e3e3e3;
+  border-radius: 12px;
+  padding: 0.9rem;
+  background: #ffffff;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.DemoIndividuals__filterCard h4 {
+  margin: 0;
+}
+
+.DemoIndividuals__filters {
+  display: grid;
+  gap: 0.55rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.DemoIndividuals__filters label {
+  display: grid;
+  gap: 0.2rem;
+  font-weight: 600;
+}
+
+.DemoIndividuals__observerFilter {
+  display: grid;
+  gap: 0.2rem;
+}
+
+:host ::ng-deep .DemoIndividuals__observerFilter small {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1f1f1f;
+}
+
+.DemoIndividuals__filters input {
+  padding: 0.45rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #cfcfcf;
+}
+
+.DemoIndividuals__filterActions {
   display: flex;
   gap: 0.5rem;
+  align-items: end;
+  grid-column: 1 / -1;
 }
 
-.DemoIndividuals table {
-  width: 100%;
-  border-collapse: collapse;
+.DemoIndividuals__mapCard {
+  border: 1px solid #e3e3e3;
+  border-radius: 12px;
+  padding: 0.9rem;
+  background: #ffffff;
+  display: grid;
+  gap: 0.6rem;
 }
 
-.DemoIndividuals th,
-.DemoIndividuals td {
-  border-bottom: 1px solid #ddd;
-  padding: 0.4rem 0.6rem;
-  text-align: left;
+.DemoIndividuals__mapHeader h4 {
+  margin: 0;
 }
 
-.DemoIndividuals tbody tr:hover {
+.DemoIndividuals__mapStatus {
+  font-size: 0.9rem;
+  color: #5f5f5f;
+}
+
+.DemoIndividuals__selectionMap {
+  display: block;
+  min-height: 68vh;
+}
+
+.DemoIndividuals__datatable {
+  box-shadow: none !important;
+}
+
+@media (max-width: 1180px) {
+  .DemoIndividuals__listMain {
+    grid-template-columns: 1fr;
+  }
+
+  .DemoIndividuals__selectionMap {
+    min-height: 46vh;
+  }
+}
+
+:host ::ng-deep .DemoIndividuals__row--clickable .datatable-row-group {
+  cursor: pointer;
+}
+
+:host ::ng-deep .DemoIndividuals__row--clickable:hover .datatable-row-group {
   background: #fafafa;
+}
+
+:host ::ng-deep .DemoIndividuals__row--selected .datatable-row-group {
+  background: #fff3d6 !important;
 }
 
 .DemoIndividuals__actionsHeader {
@@ -174,7 +278,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .DemoIndividuals__iconButton:hover {

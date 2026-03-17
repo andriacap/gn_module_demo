@@ -72,6 +72,7 @@ class IndividualsSchema(SmartRelationshipsMixin, GeoAlchemyAutoSchema):
     taxref = ma.Nested(TaxrefSchema, many=False)
     tags = ma.Nested(IndividualTagSchema, many=True, dump_only=True)
     additional_data = fields.Dict(required=False, allow_none=True)
+    observer_full_name = fields.Method("get_observer_full_name", dump_only=True)
 
     @validates_schema
     def validate_geom(self, data, **kwargs):
@@ -116,3 +117,27 @@ class IndividualsSchema(SmartRelationshipsMixin, GeoAlchemyAutoSchema):
 
         if errors:
             raise ValidationError(errors)
+
+    def get_observer_full_name(self, obj):
+        observer_role = getattr(obj, "observer_role", None)
+        if observer_role is not None:
+            observer_name = " ".join(
+                part
+                for part in [getattr(observer_role, "nom_role", None), getattr(observer_role, "prenom_role", None)]
+                if part
+            ).strip()
+            if observer_name:
+                return observer_name
+
+            nom_complet = getattr(observer_role, "nom_complet", None)
+            if isinstance(nom_complet, str) and nom_complet.strip():
+                return nom_complet.strip()
+
+        additional_data = getattr(obj, "additional_data", None)
+        if isinstance(additional_data, dict):
+            for key in ("observer", "author", "auteur"):
+                raw_value = additional_data.get(key)
+                if isinstance(raw_value, str) and raw_value.strip():
+                    return raw_value.strip()
+
+        return None

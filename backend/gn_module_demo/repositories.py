@@ -1,33 +1,113 @@
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.orm import joinedload, selectinload
 
 from apptax.taxonomie.models import Taxref
 from geonature.utils.env import db
+from pypnusershub.db.models import User
 
 from .models import BibIndividualTag, Individuals
 
 
-def build_individuals_query(load_strategy="joined"):
-    query = db.select(Individuals)
-    if load_strategy == "joined":
-        query = query.options(joinedload(Individuals.taxref))
-    elif load_strategy == "selectin":
-        query = query.options(selectinload(Individuals.taxref))
+def apply_individual_filters(query, filters=None):
+    filters = filters or {}
+
+    name_query = (filters.get("name") or "").strip()
+    if name_query:
+        query = query.where(Individuals.name_individual.ilike(f"%{name_query}%"))
+
+    taxref_query = (filters.get("taxref_query") or "").strip()
+    if taxref_query:
+        search = f"%{taxref_query}%"
+        query = query.join(Taxref, Individuals.cd_nom == Taxref.cd_nom).where(
+            or_(
+                Taxref.nom_complet.ilike(search),
+                Taxref.nom_vern.ilike(search),
+                Taxref.lb_nom.ilike(search),
+            )
+        )
+
+    observer_query = (filters.get("observer") or "").strip()
+    if observer_query:
+        observer_id = None
+        if observer_query.isdigit():
+            observer_id = int(observer_query)
+
+        if observer_id is not None:
+            query = query.where(Individuals.observer == observer_id)
+        else:
+            search = f"%{observer_query}%"
+            observer_legacy_expr = func.coalesce(
+                Individuals.additional_data["observer"].astext,
+                Individuals.additional_data["author"].astext,
+                Individuals.additional_data["auteur"].astext,
+            )
+            query = query.outerjoin(User, Individuals.observer == User.id_role).where(
+                or_(
+                    User.nom_complet.ilike(search),
+                    User.nom_role.ilike(search),
+                    User.prenom_role.ilike(search),
+                    User.identifiant.ilike(search),
+                    observer_legacy_expr.ilike(search),
+                )
+            )
+
+    observed_date_expr = func.left(
+        func.coalesce(
+            Individuals.additional_data["observation_date"].astext,
+            Individuals.additional_data["date_observation"].astext,
+            Individuals.additional_data["observed_at"].astext,
+            Individuals.additional_data["date"].astext,
+        ),
+        10,
+    )
+    date_from = filters.get("date_from")
+    if date_from:
+        query = query.where(observed_date_expr >= date_from)
+
+    date_to = filters.get("date_to")
+    if date_to:
+        query = query.where(observed_date_expr <= date_to)
+
     return query
 
 
-def list_individuals_with_taxref(load_strategy="joined"):
-    query = build_individuals_query(load_strategy=load_strategy)
+def build_individuals_query(load_strategy="joined", filters=None):
+    query = db.select(Individuals)
+    if load_strategy == "joined":
+        query = query.options(
+            joinedload(Individuals.taxref),
+            joinedload(Individuals.observer_role),
+        )
+    elif load_strategy == "selectin":
+        query = query.options(
+            selectinload(Individuals.taxref),
+            selectinload(Individuals.observer_role),
+        )
+    return apply_individual_filters(query, filters=filters)
+
+
+def list_individuals_with_taxref(load_strategy="joined", filters=None):
+    query = build_individuals_query(load_strategy=load_strategy, filters=filters)
     return db.session.scalars(query).unique().all()
 
 
-def paginate_individuals_with_taxref(page=1, per_page=50, load_strategy="selectin"):
+def list_individuals_for_map(load_strategy="selectin", filters=None):
+    query = (
+        build_individuals_query(load_strategy=load_strategy, filters=filters)
+        .order_by(Individuals.id_individual.asc())
+    )
+    return db.session.scalars(query).unique().all()
+
+
+def paginate_individuals_with_taxref(page=1, per_page=50, load_strategy="selectin", filters=None):
     page = max(1, int(page))
     per_page = max(1, int(per_page))
 
-    total = db.session.scalar(db.select(func.count(Individuals.id_individual))) or 0
+    count_query = db.select(func.count(Individuals.id_individual)).select_from(Individuals)
+    count_query = apply_individual_filters(count_query, filters=filters)
+    total = db.session.scalar(count_query) or 0
     query = (
-        build_individuals_query(load_strategy=load_strategy)
+        build_individuals_query(load_strategy=load_strategy, filters=filters)
         .order_by(Individuals.id_individual.asc())
         .offset((page - 1) * per_page)
         .limit(per_page)

@@ -4,6 +4,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 
 from apptax.taxonomie.models import Taxref
 from geonature.utils.env import DB
+from pypnusershub.db.models import User
 
 
 class Demo(DB.Model):
@@ -75,6 +76,13 @@ class Individuals(DB.Model):
         DB.ForeignKey(Taxref.cd_nom),
     )
 
+    observer = DB.Column(
+        "observer",
+        DB.Integer,
+        DB.ForeignKey(User.id_role),
+        nullable=True,
+    )
+
     geom = DB.Column(
         "geom",
         Geometry("GEOMETRY", 4326),
@@ -99,4 +107,10 @@ class Individuals(DB.Model):
         secondary=cor_individual_tag,
         lazy="selectin",
         backref=DB.backref("individuals", lazy="selectin"),
+    )
+
+    observer_role = DB.relationship(
+        User,
+        foreign_keys=[observer],
+        lazy="select",
     )

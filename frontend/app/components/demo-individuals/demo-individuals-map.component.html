@@ -1,0 +1,11 @@
+<pnx-map
+  class="DemoIndividualsMap"
+  height="360px"
+  [searchBar]="false"
+>
+  <pnx-geojson
+    [geojson]="geojsonData"
+    [zoomOnLayer]="true"
+    [onEachFeature]="onEachFeature.bind(this)"
+  ></pnx-geojson>
+</pnx-map>

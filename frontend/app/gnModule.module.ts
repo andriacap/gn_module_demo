@@ -35,6 +35,14 @@ export const routes: Routes = [
         component: DemoListComponent,
       },
       {
+        path: "individuals/new",
+        component: DemoIndividualsComponent,
+      },
+      {
+        path: "individuals/:id/edit",
+        component: DemoIndividualsComponent,
+      },
+      {
         path: "individuals",
         component: DemoIndividualsComponent,
       },

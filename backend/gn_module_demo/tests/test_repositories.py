@@ -10,6 +10,7 @@ from gn_module_demo.repositories import (
     get_individual_tags_by_ids,
     list_individual_tags,
     list_individuals_csv_rows,
+    list_individuals_for_map,
     list_individuals_projection,
     list_individuals_with_taxref,
     paginate_individuals_with_taxref,
@@ -37,6 +38,86 @@ def test_paginate_individuals_with_taxref_returns_page(individuals_batch):
     assert isinstance(pagination["items"], list)
     if pagination["items"]:
         assert hasattr(pagination["items"][0], "taxref")
+
+
+@pytest.mark.db
+def test_list_individuals_for_map_returns_sorted_ids(individuals_batch):
+    individuals = list_individuals_for_map(load_strategy="selectin")
+    ids = [individual.id_individual for individual in individuals]
+
+    assert ids == sorted(ids)
+
+
+@pytest.mark.db
+def test_paginate_individuals_with_taxref_filters_by_observer_and_date(taxref_sample, users):
+    matching_observer_id = users["admin_user"].id_role
+    not_matching_observer_id = users["self_user"].id_role
+
+    with db.session.begin_nested():
+        matching = Individuals(
+            name_individual="Filter Match",
+            cd_nom=taxref_sample.cd_nom,
+            observer=matching_observer_id,
+            additional_data={
+                "age": 2,
+                "sex": "F",
+                "observation_date": "2026-02-15",
+            },
+        )
+        not_matching = Individuals(
+            name_individual="Filter Not Match",
+            cd_nom=taxref_sample.cd_nom,
+            observer=not_matching_observer_id,
+            additional_data={
+                "age": 4,
+                "sex": "M",
+                "observation_date": "2025-01-01",
+            },
+        )
+        db.session.add_all([matching, not_matching])
+        db.session.flush()
+
+    pagination = paginate_individuals_with_taxref(
+        page=1,
+        per_page=200,
+        load_strategy="selectin",
+        filters={
+            "observer": str(matching_observer_id),
+            "date_from": "2026-01-01",
+            "date_to": "2026-12-31",
+        },
+    )
+    ids = {individual.id_individual for individual in pagination["items"]}
+
+    assert matching.id_individual in ids
+    assert not_matching.id_individual not in ids
+
+
+@pytest.mark.db
+def test_paginate_individuals_with_taxref_filters_by_taxref_query(taxref_sample):
+    search_source = taxref_sample.nom_vern or taxref_sample.nom_complet or taxref_sample.lb_nom or ""
+    query_text = search_source.strip()[:6]
+    if not query_text:
+        pytest.skip("Taxref sans nom exploitable pour tester taxref_query.")
+
+    with db.session.begin_nested():
+        target = Individuals(
+            name_individual="Taxref Filter Target",
+            cd_nom=taxref_sample.cd_nom,
+            additional_data={"age": 3, "sex": "U"},
+        )
+        db.session.add(target)
+        db.session.flush()
+
+    pagination = paginate_individuals_with_taxref(
+        page=1,
+        per_page=200,
+        load_strategy="selectin",
+        filters={"taxref_query": query_text},
+    )
+    ids = {individual.id_individual for individual in pagination["items"]}
+
+    assert target.id_individual in ids
 
 
 @pytest.mark.db
