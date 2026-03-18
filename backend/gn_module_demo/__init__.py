@@ -1,4 +1,0 @@
-MODULE_CODE = "DEMO"
-MODULE_PICTO = "fa-th-list"
-MODULE_LABEL = "Demo"
-ALEMBIC_BRANCH = "demo"

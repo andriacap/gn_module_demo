@@ -1,6 +1,6 @@
 """init model
 
-Revision ID: 943bedffa102
+Revision ID: a943bedffa10
 Revises:
 Create Date: 2023-03-27 11:54:34.602380
 
@@ -10,13 +10,13 @@ from alembic import op
 import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
-revision = "943bedffa102"
+revision = "a943bedffa10"
 down_revision = None
-branch_labels = ("demo",)
+branch_labels = ("demo_pnv",)
 depends_on = None
 
-MODULE_CODE = "DEMO"
-SCHEMA_NAME = "gn_demo"
+MODULE_CODE = "DEMO_PNV"
+SCHEMA_NAME = "gn_demo_pnv"
 TABLE_NAME = "t_demos"
 PRIMARY_KEY = "id_demo"
 

@@ -1,0 +1,4 @@
+MODULE_CODE = "DEMO_PNV"
+MODULE_PICTO = "fa-th-list"
+MODULE_LABEL = "Demo"
+ALEMBIC_BRANCH = "demo_pnv"

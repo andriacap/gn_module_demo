@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "setuptools_scm>=8.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "gn_module_demo"
+name = "gn_module_demo_pnv"
 dynamic = ["version"]
 description = "Module GeoNature de demo"
 readme = { file = "README.md", content-type = "text/markdown" }
@@ -12,17 +12,17 @@ maintainers = [
 ]
 license = { file = "LICENSE.txt" }
 dependencies = ["geonature >= 2.14"]
-urls = { Repository = "https://github.com/PnX-SI/gn_module_demo/" }
+urls = { Repository = "https://github.com/PnX-SI/gn_module_demo_pnv/" }
 requires-python = ">=3.9"
 
 [project.entry-points.gn_module]
-code = "gn_module_demo:MODULE_CODE"
-label = "gn_module_demo:MODULE_LABEL"
-picto = "gn_module_demo:MODULE_PICTO"
-blueprint = "gn_module_demo.blueprint:blueprint"
-config_schema = "gn_module_demo.conf_schema:GnModuleSchemaConf"
-migrations = "gn_module_demo:migrations"
-alembic_branch = "gn_module_demo:ALEMBIC_BRANCH"
+code = "gn_module_demo_pnv:MODULE_CODE"
+label = "gn_module_demo_pnv:MODULE_LABEL"
+picto = "gn_module_demo_pnv:MODULE_PICTO"
+blueprint = "gn_module_demo_pnv.blueprint:blueprint"
+config_schema = "gn_module_demo_pnv.conf_schema:GnModuleSchemaConf"
+migrations = "gn_module_demo_pnv:migrations"
+alembic_branch = "gn_module_demo_pnv:ALEMBIC_BRANCH"
 
 [tool.setuptools]
 package-dir = { "" = "backend" }
@@ -34,15 +34,15 @@ version = { file = "VERSION" }
 where = ["backend"]
 
 [tool.setuptools.package-data]
-"gn_module_demo" = ["templates/**", "static/**"]
-"gn_module_demo.migrations" = ["data/*.sql"]
+"gn_module_demo_pnv" = ["templates/**", "static/**"]
+"gn_module_demo_pnv.migrations" = ["data/*.sql"]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
 testpaths = ["backend"]
 
 [tool.coverage.run]
-source = ["gn_module_demo"]
+source = ["gn_module_demo_pnv"]
 omit = ["*/tests/*", "*/migrations/*"]
 
 [tool.black]

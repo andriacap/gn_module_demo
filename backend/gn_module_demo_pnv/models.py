@@ -8,7 +8,7 @@ from apptax.taxonomie.models import Taxref
 from pypnnomenclature.models import TNomenclatures as Nomenclature
 from pypnnomenclature.utils import NomenclaturesMixin
 
-SCHEMA_NAME = "gn_demo"
+SCHEMA_NAME = "gn_demo_pnv"
 
 class Demo(DB.Model):
     __tablename__ = "t_demos"

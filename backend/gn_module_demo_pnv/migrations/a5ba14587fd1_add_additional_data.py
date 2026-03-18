@@ -1,7 +1,7 @@
 """add additional_data
 
-Revision ID: 5ba14587fd13
-Revises: be9f02be3c55
+Revision ID: a5ba14587fd1
+Revises: abe9f02be3c5
 Create Date: 2026-01-23 09:56:14.977771
 
 """
@@ -12,12 +12,12 @@ from sqlalchemy.sql import table, column
 from sqlalchemy.dialects.postgresql import JSONB
 
 # revision identifiers, used by Alembic.
-revision = "5ba14587fd13"
-down_revision = "be9f02be3c55"
+revision = "a5ba14587fd1"
+down_revision = "abe9f02be3c5"
 branch_labels = None
 depends_on = None
 
-SCHEMA_NAME = "gn_demo"
+SCHEMA_NAME = "gn_demo_pnv"
 
 
 def upgrade():

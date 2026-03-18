@@ -3,7 +3,7 @@ from flask import url_for
 from sqlalchemy import select, func
 
 from geonature.utils.env import db
-from gn_module_demo.models import Demo
+from gn_module_demo_pnv.models import Demo
 from pypnusershub.tests.utils import logged_user
 
 

@@ -1,7 +1,7 @@
 """add id_nomenclature_sex
 
-Revision ID: e6fcc44d8fce
-Revises: 4225dd1abb45
+Revision ID: ae6fcc44d8fc
+Revises: a5ba14587fd1
 Create Date: 2026-02-09 17:04:22.904162
 
 """
@@ -11,12 +11,12 @@ from sqlalchemy.sql import table, column
 from sqlalchemy.dialects.postgresql import JSONB
 
 # revision identifiers, used by Alembic.
-revision = 'e6fcc44d8fce'
-down_revision = '5ba14587fd13'
+revision = 'ae6fcc44d8fc'
+down_revision = 'a5ba14587fd1'
 branch_labels = None
 depends_on = None
 
-SCHEMA_NAME = "gn_demo"
+SCHEMA_NAME = "gn_demo_pnv"
 
 def upgrade():
     conn = op.get_bind()

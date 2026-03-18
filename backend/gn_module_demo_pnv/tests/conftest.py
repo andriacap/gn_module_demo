@@ -9,8 +9,8 @@ from geonature.utils.env import db
 from geonature.core.gn_commons.models import TModules
 from geonature.core.gn_permissions.models import PermAction, PermObject, Permission
 
-from gn_module_demo import MODULE_CODE, MODULE_LABEL, MODULE_PICTO
-from gn_module_demo.blueprint import blueprint as demo_blueprint
+from gn_module_demo_pnv import MODULE_CODE, MODULE_LABEL, MODULE_PICTO
+from gn_module_demo_pnv.blueprint import blueprint as demo_blueprint
 
 
 @pytest.fixture

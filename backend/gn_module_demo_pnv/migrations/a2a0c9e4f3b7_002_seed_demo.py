@@ -1,7 +1,7 @@
 """seed demo table
 
-Revision ID: 2a0c9e4f3b7f
-Revises: 943bedffa102
+Revision ID: a2a0c9e4f3b7
+Revises: a943bedffa10
 Create Date: 2025-01-10 00:00:00.000000
 
 """
@@ -10,12 +10,12 @@ from alembic import op
 import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
-revision = "2a0c9e4f3b7f"
-down_revision = "943bedffa102"
+revision = "a2a0c9e4f3b7"
+down_revision = "a943bedffa10"
 branch_labels = None
 depends_on = None
 
-SCHEMA_NAME = "gn_demo"
+SCHEMA_NAME = "gn_demo_pnv"
 TABLE_NAME = "t_demos"
 PRIMARY_KEY = "id_demo"
 

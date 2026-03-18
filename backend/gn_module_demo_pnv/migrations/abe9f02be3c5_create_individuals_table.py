@@ -1,7 +1,7 @@
 """create_individuals_table
 
-Revision ID: be9f02be3c55
-Revises: 2a0c9e4f3b7f
+Revision ID: abe9f02be3c5
+Revises: a2a0c9e4f3b7
 Create Date: 2026-01-22 09:49:30.109045
 
 """
@@ -11,12 +11,12 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = "be9f02be3c55"
-down_revision = "2a0c9e4f3b7f"
+revision = "abe9f02be3c5"
+down_revision = "a2a0c9e4f3b7"
 branch_labels = None
 depends_on = None
 
-SCHEMA_NAME = "gn_demo"
+SCHEMA_NAME = "gn_demo_pnv"
 
 
 def upgrade():

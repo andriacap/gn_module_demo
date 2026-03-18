@@ -1,7 +1,7 @@
 """add_geom_col
 
-Revision ID: 40e1697000c1
-Revises: e6fcc44d8fce
+Revision ID: a40e1697000c
+Revises: ae6fcc44d8fc
 Create Date: 2026-02-23 15:33:42.234023
 
 """
@@ -12,12 +12,12 @@ from sqlalchemy.sql import table, column
 from sqlalchemy.dialects.postgresql import JSONB
 
 # revision identifiers, used by Alembic.
-revision = '40e1697000c1'
-down_revision = 'e6fcc44d8fce'
+revision = 'a40e1697000c'
+down_revision = 'ae6fcc44d8fc'
 branch_labels = None
 depends_on = None
 
-SCHEMA_NAME = "gn_demo"
+SCHEMA_NAME = "gn_demo_pnv"
 
 def upgrade():
     conn = op.get_bind()

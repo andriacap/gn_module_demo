@@ -24,7 +24,7 @@ from .schemas import IndividualSchema
 
 # A utiliser pour stocker les logs dans le fichier de log
 # logger = logging.getLogger(__name__)
-blueprint = Blueprint("demo", __name__, cli_group="demo")
+blueprint = Blueprint("demo_pnv", __name__, cli_group="demo_pnv")
 
 ## ########################################################################
 ## COLLECTION
