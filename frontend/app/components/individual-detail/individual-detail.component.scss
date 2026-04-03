@@ -1,0 +1,67 @@
+.IndivPage {
+  border: 2px solid coral;
+  padding: 12px;
+}
+
+.IndivPage__status {
+  border: 1px dashed #6b6b6b;
+  margin-bottom: 12px;
+  padding: 12px;
+}
+
+.IndivPage__status.is-loaded {
+  background: #f0fff4;
+}
+
+.IndivPage__status.is-empty {
+  background: #fff5f5;
+}
+
+.IndivPage__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.IndivPage__card {
+  border: 1px solid #d3d3d3;
+  padding: 8px;
+  background: #ffffff;
+}
+
+.IndivPage__label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #555555;
+}
+
+.IndivPage__value {
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.IndivPage__switch {
+  border: 2px solid #999999;
+  padding: 8px;
+  margin-bottom: 12px;
+}
+
+.IndivPage__steps {
+  display: flex;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.IndivPage__steps li {
+  border: 1px solid #c0c0c0;
+  padding: 4px 8px;
+}
+
+.IndivPage__steps li.is-active {
+  background: #f3f0ff;
+  border-color: #7a5af8;
+}

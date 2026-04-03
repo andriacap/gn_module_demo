@@ -1,0 +1,42 @@
+<div class="IndivPage">
+  <section class="IndivPage__status" [ngClass]="{ 'is-loaded': individual, 'is-empty': !individual }">
+    <h3>Route + API individus</h3>
+    <div class="IndivPage__grid">
+      <div class="IndivPage__card">
+        <div class="IndivPage__label">route snapshot (sync)</div>
+        <div class="IndivPage__value">{{ routeIdSnapshot }}</div>
+      </div>
+      <div class="IndivPage__card">
+        <div class="IndivPage__label">route params$ (async)</div>
+        <div class="IndivPage__value">{{ routeIdParams$ | async }}</div>
+      </div>
+      <div class="IndivPage__card">
+        <div class="IndivPage__label">individual$ (async)</div>
+        <div class="IndivPage__value">{{ (individual$ | async)?.id_individual }}</div>
+      </div>
+      <div class="IndivPage__card">
+        <div class="IndivPage__label">individual (subscription)</div>
+        <div class="IndivPage__value">{{ individual?.id_individual }}</div>
+      </div>
+    </div>
+    <div
+      class="IndivPage__switch"
+      [ngStyle]="{ 'border-color': individual ? '#2d9c3c' : '#c74848' }"
+      [ngSwitch]="individual ? 'loaded' : 'empty'"
+    >
+      <span *ngSwitchCase="'loaded'">state: loaded</span>
+      <span *ngSwitchDefault>state: empty</span>
+    </div>
+    <ul class="IndivPage__steps">
+      <li *ngFor="let step of statusSteps; let i = index" [ngClass]="{ 'is-active': i === 1 }">
+        {{ step }}
+      </li>
+    </ul>
+  </section>
+  <h3>Détails</h3>
+  <p>ID: {{ individual?.id_individual }}</p>
+  <p>Nom: {{ individual?.name }}</p>
+  <p>CD Nom: {{ individual?.cd_nom }}</p>
+  <p>Sexe: {{ individual?.id_nomenclature_sex }}</p>
+  <!-- <p>Additional fields: {{ individual?.additional_data }}</p> -->
+</div>

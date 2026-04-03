@@ -8,6 +8,7 @@ Create Date: 2023-03-27 11:54:34.602380
 
 from alembic import op
 import sqlalchemy as sa
+
 # revision identifiers, used by Alembic.
 revision = "943bedffa102"
 down_revision = None
@@ -28,6 +29,7 @@ NOTIFICATION_CATEGORY_DEFINITIONS = [
         "action_code": "R",
     },
 ]
+
 
 def upgrade():
     # #########################################################################

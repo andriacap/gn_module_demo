@@ -1,0 +1,67 @@
+<!-- <div class="IndivList" [ngClass]="{ 'is-empty': individuals.length === 0 }">
+  <div class="IndivList__empty" *ngIf="individuals.length === 0; else list">
+    No demo available yet.
+  </div>
+  <ng-template #list> -->
+    <!-- <a
+      class="IndivList__item"
+      *ngFor="let indiv of individuals; let i = index"
+      [routerLink]="[indiv.id_individual]"
+      [ngClass]="{ 'is-odd': i % 2 === 1}"
+    >
+      <pnx-individual [individual]="indiv"></pnx-individual>
+      <span class="IndivList__cta">Détails</span>
+    </a> -->
+    <!-- <span
+      class="IndivList__item"
+      *ngFor="let indiv of individuals; let i = index"
+
+      [ngClass]="{ 'is-odd': i % 2 === 1}"
+    >
+      <pnx-individual 
+        [individual]="indiv"
+      ></pnx-individual>
+
+      <a
+        class="IndivList__cta" 
+        [routerLink]="[indiv.id_individual]"
+      >Détails</a>
+      <a
+        class="IndivList__cta" 
+        [routerLink]="['form', indiv.id_individual]"
+      >Modifier</a>
+    </span> -->
+  <!-- </ng-template>
+</div> -->
+    <!-- <ngx-datatable
+      class="material striped"
+      [rows]="paginatedIndividuals.items"
+      [columnMode]="'force'"
+      [headerHeight]="40"
+      [footerHeight]="40"
+      [rowHeight]="44"
+      [externalPaging]="true"
+      [count]="paginatedIndividuals.total"
+      [limit]="paginatedIndividuals.limit"
+      [offset]="paginatedIndividuals.page - 1"
+      [columns]="columns"
+      (page)="onPage($event)"
+    >            
+    </ngx-datatable> -->
+  <div *ngIf="individuals$ | async as indivs">
+    <ngx-datatable
+      class="material striped"
+      [rows]="indivs.items"
+      [columnMode]="'force'"
+      [headerHeight]="40"
+      [footerHeight]="40"
+      [rowHeight]="44"
+      [externalPaging]="true"
+      [count]="indivs.total"
+      [limit]="indivs.limit"
+      [offset]="indivs.page - 1"
+      [columns]="columns"
+      (page)="onPage($event)"
+    >            
+    </ngx-datatable>
+  </div>

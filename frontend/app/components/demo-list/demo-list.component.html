@@ -7,10 +7,10 @@
       class="DemoList__item"
       *ngFor="let demo of demos; let i = index"
       [routerLink]="[demo.id_demo]"
-      [ngClass]="{ 'is-odd': i % 2 === 1 }"
+      [ngClass]="{ 'is-odd': i % 2 === 1, 'is-even': i % 2 === 0 }"
     >
       <pnx-demo [demo]="demo"></pnx-demo>
-      <span class="DemoList__cta">Voir la fiche</span>
+      <span class="DemoList__cta">Détails</span>
     </a>
   </ng-template>
 </div>

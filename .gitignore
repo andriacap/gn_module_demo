@@ -38,3 +38,8 @@ coverage.xml
 .hypothesis/
 *.swp
 *.swo
+
+# Distribution / packaging
+.Python
+env/
+build/

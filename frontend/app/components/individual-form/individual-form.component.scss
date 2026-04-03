@@ -1,0 +1,47 @@
+.DemoForm {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.DemoForm form {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 480px;
+}
+
+.DemoForm fieldset {
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.DemoForm legend {
+  font-weight: 600;
+  padding: 0 0.4rem;
+}
+
+.DemoForm .hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.DemoForm label {
+  display: grid;
+  gap: 0.25rem;
+  font-weight: 600;
+}
+
+.DemoForm .error {
+  color: #b00020;
+}
+
+.DemoForm .pending {
+  color: #8a5200;
+}
+
+.DemoForm .success {
+  color: #0b7d2a;
+}

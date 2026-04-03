@@ -1,0 +1,104 @@
+<section class="DemoForm">
+  <h3>Creation d'un individu (Reactive Forms)</h3>
+  <form [formGroup]="form" (ngSubmit)="submit()" data-qa="demo-form">
+    <label>
+      Nom
+      <input type="text" formControlName="name" />
+    </label>
+    <!-- <div class="error" *ngIf="form.get('name')?.touched && form.get('name')?.invalid">
+      Le nom est requis (max 80 caracteres).
+    </div> -->
+
+    <label>
+      CD nom
+      <input type="integer" formControlName="cd_nom" />
+    </label>
+    <!-- <label>
+      Espece (Taxref)
+      <ng-select
+        [items]="taxrefResults"
+        bindLabel="nom_complet"
+        bindValue="cd_nom"
+        [loading]="taxrefLoading"
+        [searchable]="true"
+        [clearable]="true"
+        formControlName="cd_nom"
+        (search)="searchTaxref($event.term)"
+        placeholder="Rechercher une espece"
+      ></ng-select>
+    </label> -->
+    <!-- <div class="error" *ngIf="form.get('cd_nom')?.touched && form.get('cd_nom')?.invalid">
+      Selectionnez une espece (cd_nom requis).
+    </div> -->
+
+    <!-- <label>
+      Sexe
+      <input type="integer" formControlName="id_nomenclature_sex" />
+    </label> -->
+
+    <pnx-nomenclature 
+      codeNomenclatureType="SEXE" 
+      label="Sexe"
+      [parentFormControl]="form.get('id_nomenclature_sex')">
+    </pnx-nomenclature>
+
+    <pnx-map 
+      height="500px" 
+      class="map-card" 
+      [geolocation]="true">
+
+      <pnx-leaflet-draw
+        [zoomLevel]="1"
+        [options]="leafletDrawOptions"
+        [geojson]="form.get('geom_local')?.value"
+        (layerDrawed)="onGeometryDrawn($event)"
+        (layerDeleted)="clearGeometry()"
+      ></pnx-leaflet-draw>
+
+    </pnx-map>
+
+    <!-- <label>
+      Additional data
+      <input type="text" formControlName="additional_data" />
+    </label> -->
+    <!-- <fieldset formGroupName="additional_data">
+      <legend>Donnees additionnelles (async validator)</legend>
+      <p class="hint">
+        Ces champs sont valides si age et sex sont tous les deux renseignes. Age doit etre un entier,
+        sex doit etre parmi M, F, U. La validation asynchrone appelle la route backend.
+      </p>
+      <label>
+        Age
+        <input type="number" formControlName="age" placeholder="Ex: 3" />
+      </label>
+      <label>
+        Sex
+        <input type="text" formControlName="sex" placeholder="Ex: F" />
+      </label>
+      <label>
+        Notes
+        <textarea formControlName="notes"></textarea>
+      </label>
+      <div class="error" *ngIf="form.get('additional_data')?.errors?.additionalData">
+        <ng-container *ngIf="form.get('additional_data')?.errors?.additionalData as errors">
+          <ng-container *ngIf="errors.length; else genericAdditionalError">
+            <div *ngFor="let message of errors">{{ message }}</div>
+          </ng-container>
+        </ng-container>
+        <ng-template #genericAdditionalError>
+          Les donnees additionnelles sont invalides.
+        </ng-template>
+      </div>
+      <div class="pending" *ngIf="form.get('additional_data')?.pending">
+        Validation asynchrone en cours...
+      </div>
+    </fieldset> -->
+
+    <button type="submit" [disabled]="saving">Enregistrer</button>
+  </form>
+
+  <!-- <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+  <div class="success" *ngIf="created">
+    Individu cree: {{ created.id_individual }} - {{ created.name_individual }}
+  </div> -->
+</section>
